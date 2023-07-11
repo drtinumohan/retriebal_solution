@@ -1,14 +1,15 @@
 from tika import parser
 import pandas as pd
-import os 
+import os
 import sys
 import re
+import json
+
 
 def remove_urls_within_parentheses(string):
-    pattern = r'\(https?://.*?\)'
-    cleaned_string = re.sub(pattern, '', string)
+    pattern = r"\(https?://.*?\)"
+    cleaned_string = re.sub(pattern, "", string)
     return cleaned_string
-
 
 def get_pdf_files(dir_name):
     list_pdf = []
@@ -18,7 +19,28 @@ def get_pdf_files(dir_name):
             list_pdf.append(file)
     return list_pdf
 
-def pdf_converter(directory_path, fname= None, min_length=200, include_line_breaks=False):
+def read_json_file(fpath):
+    if fpath.exists():
+        with open(f'{fpath}', 'r') as f:
+            return json.load(f)
+    return {}
+
+
+def save_json(fpath, dictionary):
+    json_object = json.dumps(dictionary, indent=4)
+    # fpath = os.path.join(dir_name, fname)
+    with open(f'{fpath}', "w") as outfile:
+        outfile.write(json_object)
+
+def delete_documents(dir_name):
+    files = get_pdf_files(dir_name)
+    for f in files:
+        os.remove(os.path.join(dir_name, f))
+
+
+def pdf_converter(
+    directory_path, fname=None, min_length=200, include_line_breaks=False
+):
     """
     Function to convert PDFs to Dataframe with columns as title & paragraphs.
 
@@ -51,7 +73,7 @@ def pdf_converter(directory_path, fname= None, min_length=200, include_line_brea
     """
     list_pdf = []
     if fname:
-        list_pdf=[fname]
+        list_pdf = [fname]
         pass
     else:
         list_pdf = get_pdf_files(directory_path)
@@ -60,7 +82,7 @@ def pdf_converter(directory_path, fname= None, min_length=200, include_line_brea
     df = pd.DataFrame(columns=["title", "paragraphs"])
     for i, pdf in enumerate(list_pdf):
         # try:
-        df.loc[i] = [pdf.replace(".pdf",''), None]
+        df.loc[i] = [pdf.replace(".pdf", ""), None]
         raw = parser.from_file(os.path.join(directory_path, pdf))
         s = raw["content"].strip()
         paragraphs = re.split("\n\n(?=\u2028|[A-Z-0-9])", s)
@@ -76,8 +98,8 @@ def pdf_converter(directory_path, fname= None, min_length=200, include_line_brea
                             # lines to form a paragraph before current paragraph p
                             list_par.append(temp_para.strip())
                             temp_para = (
-                                ""
-                            )  # reset temp_para for new lines to be concatenated
+                                ""  # reset temp_para for new lines to be concatenated
+                            )
                             list_par.append(
                                 p.replace("\n", "")
                             )  # append current paragraph with length>min_length
@@ -98,8 +120,8 @@ def pdf_converter(directory_path, fname= None, min_length=200, include_line_brea
         list_par = [remove_urls_within_parentheses(doc) for doc in list_par]
         final_para_list.extend(list_par)
     return final_para_list
-    
-        # except:
-        #     print("Unexpected error:", sys.exc_info()[0])
-        #     print("Unable to process file {}".format(pdf))
+
+    # except:
+    #     print("Unexpected error:", sys.exc_info()[0])
+    #     print("Unable to process file {}".format(pdf))
     # return df

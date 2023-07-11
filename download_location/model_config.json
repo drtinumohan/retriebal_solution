@@ -1,0 +1,4 @@
+{
+    "sematic_search_model_name ": "sentence-transformers/msmarco-distilbert-base-tas-b",
+    "qa_model_name": "deepset/deberta-v3-large-squad2"
+}

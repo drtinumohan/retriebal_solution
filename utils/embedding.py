@@ -30,9 +30,10 @@ def get_fasis_model(doc_emb):
     index.add(vector)
     return index
 
-def get_top_k_result(index_model, query_emb, docs, top_k=3):
-    docs_score, doc_index = index_model.search(np.array([query_emb], dtype=np.float32), k=top_k)
-    docs_score = docs_score.tolist()[0]
-    print(doc_index)
-    return [(docs[val], docs_score[i]) for i,val in enumerate(doc_index.tolist()[0])]
 
+def get_top_k_result(index_model, query_emb, docs, top_k=3):
+    docs_score, doc_index = index_model.search(
+        np.array([query_emb], dtype=np.float32), k=top_k
+    )
+    docs_score = docs_score.tolist()[0]
+    return [(docs[val], docs_score[i]) for i, val in enumerate(doc_index.tolist()[0])]

@@ -7,7 +7,7 @@ from utils.constant import (
     qa_model_names,
     sematic_search_key_name,
     qa_key_name,
-    model_config_fname
+    model_config_fname,
 )
 from utils.converter import save_json, delete_documents
 
@@ -31,7 +31,7 @@ with st.form(
     key="Form :", clear_on_submit=True
 ):  # st.form(key="Form :", clear_on_submit = True):
     File = st.file_uploader(label="Upload file", type=["pdf"])
-    prev_document_flag = st.checkbox('Keep previous documents', value= True)
+    prev_document_flag = st.checkbox("Keep previous documents", value=True)
     file_submit = st.form_submit_button(label="Submit")
 
 # with st.form(
@@ -43,12 +43,12 @@ with st.form(
 #     qa_model_name = st.selectbox("QA Model", qa_model_names)
 #     config_Submit = st.form_submit_button(label="Submit")
 
-    # File = st.file_uploader(label = "Upload file", type=["pdf"])
-    # Submit = st.form_submit_button(label='Submit')
+# File = st.file_uploader(label = "Upload file", type=["pdf"])
+# Submit = st.form_submit_button(label='Submit')
 
 
 if file_submit:
-    if prev_document_flag == False: 
+    if prev_document_flag == False:
         __ = delete_documents(folder_location)
 
     progress_text = "Document saving in progress. Please wait."
@@ -70,4 +70,4 @@ if file_submit:
 #     }
 #     st.success(f"model {sematic_search_model_name} and {qa_model_name} is successfully saved!")
 #     save_json(save_path,model_config)
-    # st.write(model_config)
+# st.write(model_config)

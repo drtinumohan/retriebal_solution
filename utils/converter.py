@@ -11,6 +11,7 @@ def remove_urls_within_parentheses(string):
     cleaned_string = re.sub(pattern, "", string)
     return cleaned_string
 
+
 def get_pdf_files(dir_name):
     list_pdf = []
     list_file = os.listdir(dir_name)
@@ -19,9 +20,10 @@ def get_pdf_files(dir_name):
             list_pdf.append(file)
     return list_pdf
 
+
 def read_json_file(fpath):
     if fpath.exists():
-        with open(f'{fpath}', 'r') as f:
+        with open(f"{fpath}", "r") as f:
             return json.load(f)
     return {}
 
@@ -29,8 +31,9 @@ def read_json_file(fpath):
 def save_json(fpath, dictionary):
     json_object = json.dumps(dictionary, indent=4)
     # fpath = os.path.join(dir_name, fname)
-    with open(f'{fpath}', "w") as outfile:
+    with open(f"{fpath}", "w") as outfile:
         outfile.write(json_object)
+
 
 def delete_documents(dir_name):
     files = get_pdf_files(dir_name)

@@ -8,7 +8,7 @@ from utils.constant import (
     qa_model_names,
     sematic_search_key_name,
     qa_key_name,
-    model_config_fname
+    model_config_fname,
 )
 
 st.title("Model selection")
@@ -26,9 +26,10 @@ if config_Submit:
     save_path = Path(folder_location, model_config_fname)
     model_config = {
         sematic_search_key_name: sematic_search_model_name,
-         qa_key_name: qa_model_name
-
+        qa_key_name: qa_model_name,
     }
-    st.success(f"model {sematic_search_model_name} and {qa_model_name} is successfully saved!")
-    save_json(save_path,model_config)
+    st.success(
+        f"model {sematic_search_model_name} and {qa_model_name} is successfully saved!"
+    )
+    save_json(save_path, model_config)
     # st.write(model_config)

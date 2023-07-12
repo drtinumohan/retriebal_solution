@@ -34,14 +34,14 @@ with st.form(
     prev_document_flag = st.checkbox('Keep previous documents', value= True)
     file_submit = st.form_submit_button(label="Submit")
 
-with st.form(
-    key="model_selection", clear_on_submit=True
-):  # st.form(key="Form :", clear_on_submit = True):
-    sematic_search_model_name = st.selectbox(
-        "Select Semantic Search Model", sematic_search_model_names
-    )
-    qa_model_name = st.selectbox("QA Model", qa_model_names)
-    config_Submit = st.form_submit_button(label="Submit")
+# with st.form(
+#     key="model_selection", clear_on_submit=True
+# ):  # st.form(key="Form :", clear_on_submit = True):
+#     sematic_search_model_name = st.selectbox(
+#         "Select Semantic Search Model", sematic_search_model_names
+#     )
+#     qa_model_name = st.selectbox("QA Model", qa_model_names)
+#     config_Submit = st.form_submit_button(label="Submit")
 
     # File = st.file_uploader(label = "Upload file", type=["pdf"])
     # Submit = st.form_submit_button(label='Submit')
@@ -61,13 +61,13 @@ if file_submit:
         my_bar = pg_bar_val.progress(100, text="Done")
         success_bar = sc_bar.success(f"File {File.name} is successfully saved!")
 
-if config_Submit:
-    save_path = Path(folder_location, model_config_fname)
-    model_config = {
-        sematic_search_key_name: sematic_search_model_name,
-         qa_key_name: qa_model_name
+# if config_Submit:
+#     save_path = Path(folder_location, model_config_fname)
+#     model_config = {
+#         sematic_search_key_name: sematic_search_model_name,
+#          qa_key_name: qa_model_name
 
-    }
-    st.success(f"model {sematic_search_model_name} and {qa_model_name} is successfully saved!")
-    save_json(save_path,model_config)
+#     }
+#     st.success(f"model {sematic_search_model_name} and {qa_model_name} is successfully saved!")
+#     save_json(save_path,model_config)
     # st.write(model_config)

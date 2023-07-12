@@ -2,12 +2,13 @@ folder_location = "download_location/"
 model_config_fname = "model_config.json"
 default_sematic_search_model_name = "sentence-transformers/all-MiniLM-L6-v2"
 default_qa_model_name = "deepset/roberta-base-squad2-distilled"
+top_k = 5
 
 sematic_search_model_names = (
     default_sematic_search_model_name,
     "sentence-transformers/all-mpnet-base-v2",
     "sentence-transformers/all-distilroberta-v1",
-    "sentence-transformers/msmarco-distilbert-base-tas-b"
+    "sentence-transformers/msmarco-distilbert-base-tas-b",
 )
 
 qa_model_names = (

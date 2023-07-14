@@ -21,18 +21,34 @@ model_config = read_json_file(model_config_fpath)
 
 # st.write(model_config)
 
+@st.cache_resource
+def setup_embed_model(doc_list, sematic_search_model_name):
+    # pg_bar_val = st.empty()
+    # pg_bar_val.progress(0, text="Extracting Document")
+    doc_text = pdf_converter(folder_location)
+    # pg_bar_val.progress(25, text="Creating document embeddings")
+    emb_model = get_model(sematic_search_model_name)
+    doc_emb = get_embedding(emb_model, doc_text)
+    index_model = get_fasis_model(doc_emb)
+    return  emb_model, doc_emb, doc_text, index_model
+    # pg_bar_val.progress(75, text="Creating Faiss index")
+    # pg_bar_val.progress(90, text="Loading QA model")
+
+
+    return emb_model, doc_emb, doc_text, index_model
 
 @st.cache_resource
-def setup_embd_model(doc_list, sematic_search_model_name, qa_model_name):
+def setup_model(doc_list, sematic_search_model_name, qa_model_name):
     pg_bar_val = st.empty()
     pg_bar_val.progress(0, text="Extracting Document")
     doc_text = pdf_converter(folder_location)
-    pg_bar_val.progress(25, text="Creating document embeddings")
+    # pg_bar_val.progress(25, text="Creating document embeddings")
     emb_model = get_model(sematic_search_model_name)
     doc_emb = get_embedding(emb_model, doc_text)
-    pg_bar_val.progress(75, text="Creating Faiss index")
     index_model = get_fasis_model(doc_emb)
-    pg_bar_val.progress(90, text="Loading QA model")
+    # pg_bar_val.progress(75, text="Creating Faiss index")
+    # pg_bar_val.progress(90, text="Loading QA model")
+    emb_model, doc_emb, doc_text, index_model = setup_embed_model(doc_list, sematic_search_model_name)
     qa_model = get_qa_model(qa_model_name)
     pg_bar_val.progress(100, text="Done")
     pg_bar_val.empty()
@@ -46,7 +62,7 @@ def setup_embd_model(doc_list, sematic_search_model_name, qa_model_name):
 
 
 doc_list = tuple(get_pdf_files(folder_location))
-emb_model, doc_emb, doc_text, index_model, qa_model = setup_embd_model(
+emb_model, doc_emb, doc_text, index_model, qa_model = setup_model(
     doc_list,
     model_config.get(sematic_search_key_name, default_sematic_search_model_name),
     model_config.get(qa_key_name, default_qa_model_name)
@@ -74,9 +90,12 @@ if text_input:
     # top_k_result = get_top_k_result(doc_emb, query_emb, doc_text,top_k = top_k)
     top_k_result = get_top_k_result(index_model, query_emb, doc_text, top_k=top_k)
     relevent_docs = [result[0] for result in top_k_result]
+    st.write("".join(relevent_docs))
     document_relevance_scores = [result[1] for result in top_k_result]
     result_dict = get_anwser(qa_model, text_input, relevent_docs)
     result_df = format_qa_output(relevent_docs, document_relevance_scores, result_dict)
+   
+  
     st.dataframe(
         result_df[["answer", "paragraph", "score", "re_score", "start", "end"]],
         width=1000,

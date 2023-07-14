@@ -42,7 +42,7 @@ def delete_documents(dir_name):
 
 
 def pdf_converter(
-    directory_path, fname=None, min_length=200, include_line_breaks=False
+    directory_path, fname=None, min_length=300, include_line_breaks=False
 ):
     """
     Function to convert PDFs to Dataframe with columns as title & paragraphs.
@@ -120,7 +120,7 @@ def pdf_converter(
                     list_par.append(temp_para.strip())
 
         # df.loc[i, "paragraphs"] = list_par
-        list_par = [remove_urls_within_parentheses(doc) for doc in list_par]
+        # list_par = [doc in list_par]
         final_para_list.extend(list_par)
     return final_para_list
 

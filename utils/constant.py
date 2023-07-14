@@ -15,6 +15,7 @@ qa_model_names = (
     default_qa_model_name,
     "deepset/roberta-base-squad2",
     "deepset/deberta-v3-large-squad2",
+    "tiiuae/falcon-7b-instruct"
 )
 
 sematic_search_key_name = "sematic_search_model_name "

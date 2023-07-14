@@ -1,4 +1,4 @@
 {
-    "sematic_search_model_name ": "sentence-transformers/msmarco-distilbert-base-tas-b",
-    "qa_model_name": "deepset/roberta-base-squad2"
+    "sematic_search_model_name ": "sentence-transformers/all-distilroberta-v1",
+    "qa_model_name": "deepset/roberta-base-squad2-distilled"
 }

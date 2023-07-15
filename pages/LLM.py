@@ -6,7 +6,7 @@ from pathlib import Path
 import torch
 import streamlit as st
 from langchain import PromptTemplate,  LLMChain
-from pages.QA import setup_embed_model
+
 from utils.converter import pdf_converter, get_pdf_files, read_json_file
 from utils.constant import (
     folder_location,
@@ -25,9 +25,9 @@ model_config.get(sematic_search_key_name, default_sematic_search_model_name)
 doc_list = tuple(get_pdf_files(folder_location))
 
 @st.cache_resource
-def setup_model(doc_list):
+def setup_model(doc_list, doc_search_model_name):
     text = extract_text_from_form_all_file(folder_location, doc_list)
-    doc_search_model = DocumentSematicSearch(model_config.get(sematic_search_key_name, default_sematic_search_model_name))
+    doc_search_model = DocumentSematicSearch(doc_search_model_name)
     document_chunks = get_files_chunks(doc_search_model.tokenizer, text)
     doc_embd = doc_search_model.get_document_embedding(document_chunks)
     return doc_embd, document_chunks, doc_search_model
@@ -35,21 +35,15 @@ def setup_model(doc_list):
 
 llm_pipeline = get_pipeline()
 llm = HuggingFacePipeline(pipeline = llm_pipeline)
-
-
-
-
-
-
-template = """
-read the  below paragraphs and answer the question in a few words
-context: {context} 
-answer of the question {question} 
+template = """Answer the question as truthfully as possible using the provided text, and if the answer is not contained within the text below, respond with "I can't answer that"
+Context:
+{context}
+QUESTION:  {query}
 """
-prompt = PromptTemplate(template=template, input_variables=["question","context"])
-
+prompt = PromptTemplate(template=template, input_variables=["query","context"])
 llm_chain = LLMChain(prompt=prompt, llm=llm)
-doc_embd, document_chunks, doc_search_model = setup_model(doc_list)
+
+doc_embd, document_chunks, doc_search_model = setup_model(doc_list, model_config.get(sematic_search_key_name, default_sematic_search_model_name))
 question = st.text_input(
     "question",
     value='',
@@ -68,9 +62,13 @@ question = st.text_input(
 if question: #and context:
 
     query_emb  = doc_search_model.get_document_embedding(question)
-    topk_docs = doc_search_model.get_topk_result(query_emb, doc_embd)
+    topk_docs = doc_search_model.get_topk_result(query_emb, doc_embd,k=3)
     result = " ".join([document_chunks[doc_info[0]] for doc_info in topk_docs])
-    st.write([document_chunks[doc_info[0]] for doc_info in topk_docs])
+    context = "\n".join([document_chunks[doc_info[0]] for doc_info in topk_docs])
+  
+    st.write(llm_chain.run(query=question,context= context))
+    st.write("".join([document_chunks[doc_info[0]] for doc_info in topk_docs]))
+   
 
 
     # query_emb = emb_model.encode(question)
@@ -78,6 +76,6 @@ if question: #and context:
     # relevent_docs = [result[0] for result in top_k_result]
     # context = " ".join(relevent_docs)
    
-    # # st.write(llm_chain.run(question=question,context= context))
+   
     # st.write(llm_chain.run(question=question,context= context))
     # st.write(context)

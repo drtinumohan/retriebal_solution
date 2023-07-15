@@ -14,10 +14,11 @@ def get_pipeline():
         torch_dtype=torch.bfloat16,
         trust_remote_code=True,
         device_map="auto",
-        max_length=512,
+        # max_length=1280,
+        max_new_tokens=200,
         do_sample=False,
         top_k=1,
-        temperature=0.1             ,
+        temperature=0.05,
         num_return_sequences=1,
         eos_token_id=tokenizer.eos_token_id
     )

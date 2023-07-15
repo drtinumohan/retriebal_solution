@@ -5,7 +5,6 @@ from pathlib import Path
 import torch
 import streamlit as st
 from langchain import PromptTemplate,  LLMChain
-from pages.QA import setup_embed_model
 from utils.converter import pdf_converter, get_pdf_files, read_json_file
 from utils.constant import (
     folder_location,
@@ -18,28 +17,27 @@ from utils.constant import (
 )
 llm_pipeline = get_pipeline()
 llm = HuggingFacePipeline(pipeline = llm_pipeline)
-template = """
-{prompt} 
-"""
-prompt = PromptTemplate(template=template, input_variables=["prompt"])
-
-llm_chain = LLMChain(prompt=prompt, llm=llm)
 
 
+prompt_area = st.text_area(
+    "Prompt templete",
+    value='',
+    height=200,
+    max_chars=350,
+    key=None,
+    help=None,
+    on_change=None,
+    args=None,
+    kwargs=None,
+    placeholder=None,
+    disabled=False,
+    label_visibility="visible",
+)
 
-
-context = st.text_area(
-    "context",
-    value="""
-    input:  toyota camary le 
-    output: {"make_name":"toyota", "model_name": "camary", "trim_name":"le"}. 
-    input: kia seltos rt 
-    output: {"make_name":"kia", "model_name": "seltos", "trim_name":"rt"}. 
-    predict the output in json format for the input  maruthi swift desire
-
-    """,
-    height=300,
-    max_chars=1500,
+input_area = st.text_input(
+    "input_variable",
+    value='["context","question"]',
+    max_chars=50,
     key=None,
     help=None,
     on_change=None,
@@ -51,20 +49,31 @@ context = st.text_area(
 )
 
 
-# question = st.text_input(
-#     "question",
-#     value='',
-#     max_chars=None,
-#     key='llm',
-#     type="default",
-#     help=None,
-#     autocomplete=None,
-#     on_change=None,
-#     args=None,
-#     kwargs=None,
-#     placeholder=None,
-#     disabled=False,
-#     label_visibility="visible",
-# )
-if context:
-    st.write(llm_chain.run(prompt=context))
+query_area = st.text_area(
+    "query",
+    value = '{"context":"""""","question":""""""}',
+    height=200,
+    max_chars=15000,
+    key=None,
+    help=None,
+    on_change=None,
+    args=None,
+    kwargs=None,
+    placeholder=None,
+    disabled=False,
+    label_visibility="visible",
+)
+
+query_area = eval(query_area)
+
+if prompt_area and input_area and query_area.get("context") and query_area.get("question"):
+    # print(eval(prompt_area))
+    # print(eval(prompt_area)[-5:])
+    template = eval(prompt_area)
+    input_variables = eval(input_area)
+    print(template,input_variables )
+    prompt = PromptTemplate(template=template, input_variables=input_variables)
+
+    llm_chain = LLMChain(prompt=prompt, llm=llm)
+    # print(eval(query_area))
+    st.write(llm_chain.run(**query_area))

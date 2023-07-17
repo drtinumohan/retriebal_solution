@@ -1,7 +1,8 @@
-#%%
+# %%
 import os
 from io import BufferedReader
 from typing import Optional
+
 # from fastapi import UploadFile
 import mimetypes
 from PyPDF2 import PdfReader
@@ -15,6 +16,19 @@ import torch
 from typing import Dict, List, Optional, Tuple
 import torch.nn.functional as F
 from sentence_transformers import SentenceTransformer, util
+import tiktoken
+
+llm_tokenizer = tiktoken.get_encoding("cl100k_base")
+
+
+def complete_sentence(text):
+    last_dot_index = text.rfind(".")
+    if last_dot_index != -1:
+        cropped_text = text[: last_dot_index + 1]
+        return cropped_text
+    else:
+        return text
+
 
 # from models.models import Document, DocumentMetadata
 
@@ -28,7 +42,8 @@ from sentence_transformers import SentenceTransformer, util
 
 #     return doc
 
-#%%
+
+# %%
 def extract_text_from_filepath(filepath: str, mimetype: Optional[str] = None) -> str:
     """Return the text content of a file given its filepath."""
 
@@ -94,22 +109,23 @@ def extract_text_from_file(file: BufferedReader, mimetype: str) -> str:
     return extracted_text
 
 
-
 # Extract text from a file based on its mimetype
-def extract_text_from_form_all_file(folder_location, file_path_arr):#(file: UploadFile):
+def extract_text_from_form_all_file(
+    folder_location, file_path_arr
+):  # (file: UploadFile):
     """Return the text content of all files as array."""
     all_text_arr = []
     mime = magic.Magic(mime=True)
-    
+
     for file_path in file_path_arr:
-        file_loc =  os.path.join(folder_location, file_path)
+        file_loc = os.path.join(folder_location, file_path)
         mimetype = mime.from_file(file_loc)
-       
-        extracted_text = extract_text_from_filepath(file_loc, mimetype)#(temp_file_path, mimetype)
+
+        extracted_text = extract_text_from_filepath(
+            file_loc, mimetype
+        )  # (temp_file_path, mimetype)
         all_text_arr.extend([extracted_text])
     return all_text_arr
-
-
 
 
 CHUNK_SIZE = 200  # The target size of each text chunk in tokens
@@ -117,14 +133,18 @@ MIN_CHUNK_SIZE_CHARS = 350  # The minimum size of each text chunk in characters
 MIN_CHUNK_LENGTH_TO_EMBED = 10  # Discard chunks shorter than this
 MAX_NUM_CHUNKS = 10000  # The maximum number of chunks to generate from a text
 
-#%%
-def get_files_chunks(tokenizer, text_arr):
+
+# %%
+def get_files_chunks(tokenizer, text_arr, chunk_token_size):
     all_text_junks = []
     for text in text_arr:
-        all_text_junks.extend(get_text_chunks(tokenizer, text))
+        all_text_junks.extend(get_text_chunks(tokenizer, text, chunk_token_size))
     return all_text_junks
 
-def get_text_chunks(tokenizer, text: str, chunk_token_size: Optional[int]=None) -> List[str]:
+
+def get_text_chunks(
+    tokenizer, text: str, chunk_token_size: Optional[int] = None
+) -> List[str]:
     """
     Split a text into chunks of ~CHUNK_SIZE tokens, based on punctuation and newline boundaries.
 
@@ -140,13 +160,17 @@ def get_text_chunks(tokenizer, text: str, chunk_token_size: Optional[int]=None) 
         return []
 
     # Tokenize the text
-    tokens = tokenizer.encode(text, add_special_tokens= False) # tokens = tokenizer.encode(text, disallowed_special=())
+    tokens = tokenizer.encode(
+        text, disallowed_special=()
+    )  # tokenizer.encode(text, add_special_tokens= False) # tokens = tokenizer.encode(text, disallowed_special=())
+    # print(len(tokens))
     # return tokens
     # Initialize an empty list of chunks
     chunks = []
 
     # Use the provided chunk token size or the default one
     chunk_size = chunk_token_size or CHUNK_SIZE
+    print("print chunk size:", chunk_size)
 
     # Initialize a counter for the number of chunks
     num_chunks = 0
@@ -156,7 +180,9 @@ def get_text_chunks(tokenizer, text: str, chunk_token_size: Optional[int]=None) 
         chunk = tokens[:chunk_size]
 
         # Decode the chunk into text
-        chunk_text = tokenizer.decode(chunk, skip_special_tokens= True)
+        chunk_text = tokenizer.decode(
+            chunk
+        )  # tokenizer.decode(chunk, skip_special_tokens= True)
 
         # Skip the chunk if it is empty or whitespace
         if not chunk_text or chunk_text.isspace():
@@ -186,77 +212,88 @@ def get_text_chunks(tokenizer, text: str, chunk_token_size: Optional[int]=None) 
             chunks.append(chunk_text_to_append)
 
         # Remove the tokens corresponding to the chunk text from the remaining tokens
-        tokens = tokens[len(tokenizer.encode(chunk_text, add_special_tokens= False)) :]
+        tokens = tokens[
+            len(tokenizer.encode(chunk_text, disallowed_special=())) :
+        ]  # len(tokenizer.encode(chunk_text, add_special_tokens= False)) :]
 
         # Increment the number of chunks
         num_chunks += 1
 
     # Handle the remaining tokens
     if tokens:
-        remaining_text = tokenizer.decode(tokens, skip_special_tokens= True).replace("\n", " ").strip()
+        remaining_text = (
+            tokenizer.decode(chunk).replace("\n", " ").strip()
+        )  # tokenizer.decode(tokens, skip_special_tokens= True).replace("\n", " ").strip()
         if len(remaining_text) > MIN_CHUNK_LENGTH_TO_EMBED:
             chunks.append(remaining_text)
     return chunks
 
-#%%
+
+# %%
 class DocumentSematicSearch:
-
-
     def __init__(self, model_name):
         self.tokenizer = AutoTokenizer.from_pretrained(model_name)
         self.model = AutoModel.from_pretrained(model_name)
-
+        self.llm_tokenizer = llm_tokenizer
 
     def mean_pooling(self, model_output, attention_mask):
-        token_embeddings = model_output[0] #First element of model_output contains all token embeddings
-        input_mask_expanded = attention_mask.unsqueeze(-1).expand(token_embeddings.size()).float()
+        token_embeddings = model_output[
+            0
+        ]  # First element of model_output contains all token embeddings
+        input_mask_expanded = (
+            attention_mask.unsqueeze(-1).expand(token_embeddings.size()).float()
+        )
         sum_embeddings = torch.sum(token_embeddings * input_mask_expanded, 1)
         sum_mask = torch.clamp(input_mask_expanded.sum(1), min=1e-9)
         return sum_embeddings / sum_mask
-    
+
     def get_document_embedding(self, text):
-        encoded_input = self.tokenizer(text, padding=True, truncation=True, return_tensors='pt')   
+        encoded_input = self.tokenizer(
+            text, padding=True, truncation=True, return_tensors="pt"
+        )
         with torch.no_grad():
             model_output = self.model(**encoded_input)
-            sentence_embeddings = self.mean_pooling(model_output, encoded_input['attention_mask'])
-            # sentence_embeddings = util.normalize_embeddings(sentence_embeddings)
-            sentence_embeddings = F.normalize(sentence_embeddings, p=2, dim=1)
+            sentence_embeddings = self.mean_pooling(
+                model_output, encoded_input["attention_mask"]
+            )
         return sentence_embeddings
-    
 
-    def get_topk_result(self,query_embeddings, corpus_embeddings, k=5):
-        result = util.semantic_search(query_embeddings, corpus_embeddings, score_function=util.dot_score)
-        return [(scores["corpus_id"],scores["score"] ) for scores in result[0][:k]]
-    
+    def get_topk_result(self, query_embeddings, corpus_embeddings, k=5):
+        result = util.semantic_search(
+            query_embeddings, corpus_embeddings, score_function=util.cos_sim
+        )
+        return [(scores["corpus_id"], scores["score"]) for scores in result[0][:k]]
+
     # def get_document_index():
 
-#%%
-if __name__ == '__main__':
-    text = extract_text_from_form_all_file("/home/bioss/working_env/retriebal_solution/download_location/",
-        ["Mohanlal - Wikipedia.pdf",
-         "iCargo_Brochure.pdf"
-         ]
-        )
-  
+
+# %%
+if __name__ == "__main__":
+    text = extract_text_from_form_all_file(
+        "/home/bioss/working_env/retriebal_solution/download_location/",
+        ["Mohanlal - Wikipedia.pdf", "iCargo_Brochure.pdf"],
+    )
+
     # tokenizer = AutoTokenizer.from_pretrained("sentence-transformers/all-MiniLM-L6-v2")
     # model = AutoModel.from_pretrained("sentence-transformers/all-MiniLM-L6-v2")
-    
+
     # document_token = get_text_chunks(tokenizer, text)
-    doc_search_model = DocumentSematicSearch("sentence-transformers/all-distilroberta-v1")
+    doc_search_model = DocumentSematicSearch(
+        "sentence-transformers/all-distilroberta-v1"
+    )
     document_chunks = get_files_chunks(doc_search_model.tokenizer, text)
     doc_embd = doc_search_model.get_document_embedding(document_chunks)
-    query_emb  = doc_search_model.get_document_embedding("who is the father of mohanlal")
+    query_emb = doc_search_model.get_document_embedding("who is the father of mohanlal")
     topk_docs = doc_search_model.get_topk_result(query_emb, doc_embd)
     result = " ".join([document_chunks[doc_info[0]] for doc_info in topk_docs])
 
 
+# %%
 
-#%%
+# %%
 
-#%%
 
-        
-#%%
+# %%
 
 # def mean_pooling(model_output, attention_mask):
 #     token_embeddings = model_output[0] #First element of model_output contains all token embeddings
@@ -269,8 +306,6 @@ if __name__ == '__main__':
 #     with torch.no_grad():
 #         model_output = model(**encoded_input)
 #         sentence_embeddings = mean_pooling(model_output, encoded_input['attention_mask'])
-
-
 
 
 # %%

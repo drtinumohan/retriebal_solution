@@ -1,10 +1,10 @@
 from utils.llm import get_pipeline
 from langchain import HuggingFacePipeline
-from utils.embedding import  get_top_k_result
+from utils.embedding import get_top_k_result
 from pathlib import Path
 import torch
 import streamlit as st
-from langchain import PromptTemplate,  LLMChain
+from langchain import PromptTemplate, LLMChain
 from utils.converter import pdf_converter, get_pdf_files, read_json_file
 from utils.constant import (
     folder_location,
@@ -15,13 +15,14 @@ from utils.constant import (
     model_config_fname,
     top_k,
 )
+
 llm_pipeline = get_pipeline()
-llm = HuggingFacePipeline(pipeline = llm_pipeline)
+llm = HuggingFacePipeline(pipeline=llm_pipeline)
 
 
 prompt_area = st.text_area(
     "Prompt templete",
-    value='',
+    value="",
     height=200,
     max_chars=350,
     key=None,
@@ -51,7 +52,7 @@ input_area = st.text_input(
 
 query_area = st.text_area(
     "query",
-    value = '{"context":"""""","question":""""""}',
+    value='{"context":"""""","question":""""""}',
     height=200,
     max_chars=15000,
     key=None,
@@ -66,14 +67,21 @@ query_area = st.text_area(
 
 query_area = eval(query_area)
 
-if prompt_area and input_area and query_area.get("context") and query_area.get("question"):
+if (
+    prompt_area
+    and input_area
+    and query_area.get("context")
+    and query_area.get("question")
+):
     # print(eval(prompt_area))
     # print(eval(prompt_area)[-5:])
     template = eval(prompt_area)
     input_variables = eval(input_area)
-    print(template,input_variables )
+    # print(template,input_variables )
+    query_area = {key: val.lower() for key, val in query_area.items()}
     prompt = PromptTemplate(template=template, input_variables=input_variables)
-
+    print("tinu mohan")
+    print("query generation\n", (prompt.format(**query_area)))
     llm_chain = LLMChain(prompt=prompt, llm=llm)
     # print(eval(query_area))
     st.write(llm_chain.run(**query_area))

@@ -16,7 +16,7 @@ def get_pdf_files(dir_name):
     list_pdf = []
     list_file = os.listdir(dir_name)
     for file in list_file:
-        if file.endswith("pdf"):
+        if file.endswith("pdf") or file.endswith("csv"):
             list_pdf.append(file)
     return list_pdf
 

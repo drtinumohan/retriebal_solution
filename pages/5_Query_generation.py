@@ -5,54 +5,59 @@ from pathlib import Path
 import torch
 import streamlit as st
 from langchain import PromptTemplate, LLMChain
-from utils.converter import pdf_converter, get_pdf_files, read_json_file
-from utils.constant import (
-    folder_location,
-    sematic_search_key_name,
-    qa_key_name,
-    default_sematic_search_model_name,
-    default_qa_model_name,
-    model_config_fname,
-    top_k,
-)
+
+
+import json
+from collections import deque
+
+def extract_first_json(text):
+    json_queue = deque()
+    start, end = -1,-1
+    for idx,char in enumerate(text):
+        if char == '{':
+            if start == -1:
+                start = idx     
+            json_queue.append(char)  
+        elif char == '}':
+            json_queue.pop()
+            if len(json_queue)==0:
+                end = idx
+                return json.loads(text[start:end+1])
 
 llm_pipeline = get_pipeline()
 llm = HuggingFacePipeline(pipeline=llm_pipeline)
 
+#You are a helpful AI assistant and provide >>OUTPUT<< AS JSON for >>QUERY<< by learening patterns >>INPUT<< and >>OUTPUT<< 
 
-prompt_area = st.text_area(
-    "Prompt templete",
-    value="",
-    height=200,
-    max_chars=350,
-    key=None,
-    help=None,
-    on_change=None,
-    args=None,
-    kwargs=None,
-    placeholder=None,
-    disabled=False,
-    label_visibility="visible",
-)
+example = """
+You are a helpful AI assistant. From the examples given below, Learn the  >>OUTPUT<< generated from >>INPUT<<
+>>INPUT<< all fights from AYT
+>>OUTPUT<< {"logicalOperator":"AND","conditions":[{"entity":"flight","property":"from_airport","condition":"=","value":"AYT"}]}
+>>INPUT<< Show me all flights arriving or departing at DXB
+>>INPUT<< Show me all flights going through DXB
+>>OUTPUT<< {"logicalOperator":"OR","conditions":[{"entity":"flight","property":"from_airport","condition":"=","value":"DXB"},{"entity":"flight","property":"to_airport","condition":"=","value":"DXB"}]}
+>>INPUT<< Show all fights from AYT to FRA
+>>OUTPUT<< {"logicalOperator":"AND","conditions":[{"entity":"flight","property":"from_airport","condition":"=","value":"AYT"},{"entity":"flight","property":"to_airport","condition":"=","value":"FRA"}]}
+>>INPUT<< List all 777 aircraft
+>>OUTPUT<< {"logicalOperator":"AND","conditions":[{"entity":"flight","property":"aircraft_type","condition":"=","value":"777"}]}
+>>INPUT<< Show me all the flights departing in less than 5 hours
+>>OUTPUT<< {"logicalOperator":"AND","conditions":[{"entity":"flight","property":"flight_date_time","condition":"<","value":"5 hours"}]}
+>>INPUT<< Show me all flights at DXB between 0300 and 0800 today 
+>>OUTPUT<<{"logicalOperator":"AND","conditions":[{"entity":"flight","property":"from_airport","condition":"=","value":"DXB"},{"entity":"flight","property":"flight_date_time","condition":"BETWEEN","value":["0300","0800"]}]}
+now provide >>OUTPUT<< AS JSON for the >>QUERY<<
+"""
 
-input_area = st.text_input(
-    "input_variable",
-    value='["context","question"]',
-    max_chars=50,
-    key=None,
-    help=None,
-    on_change=None,
-    args=None,
-    kwargs=None,
-    placeholder=None,
-    disabled=False,
-    label_visibility="visible",
-)
+prompt_area = """
+{example}
+>>QUERY<< {question}
+>>OUTPUT<< 
+"""
+
 
 
 query_area = st.text_area(
     "query",
-    value='{"context":"""""","question":""""""}',
+    value='',
     height=200,
     max_chars=15000,
     key=None,
@@ -65,23 +70,24 @@ query_area = st.text_area(
     label_visibility="visible",
 )
 
-query_area = eval(query_area)
-
 if (
-    prompt_area
-    and input_area
-    and query_area.get("context")
-    and query_area.get("question")
+    query_area
 ):
-    # print(eval(prompt_area))
-    # print(eval(prompt_area)[-5:])
-    template = eval(prompt_area)
-    input_variables = eval(input_area)
-    # print(template,input_variables )
-    query_area = {key: val.lower() for key, val in query_area.items()}
-    prompt = PromptTemplate(template=template, input_variables=input_variables)
-    print("tinu mohan")
+
+    query_area = {
+        "example":example,
+        "question":query_area
+    }
+    prompt = PromptTemplate(template=prompt_area, input_variables=["example","question"])
     print("query generation\n", (prompt.format(**query_area)))
     llm_chain = LLMChain(prompt=prompt, llm=llm)
-    # print(eval(query_area))
-    st.write(llm_chain.run(**query_area))
+    output = llm_chain.run(**query_area)
+    print(output)
+    st.write(extract_first_json(output))
+
+
+
+
+
+
+

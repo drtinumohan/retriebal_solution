@@ -17,6 +17,9 @@ from typing import Dict, List, Optional, Tuple
 import torch.nn.functional as F
 from sentence_transformers import SentenceTransformer, util
 import tiktoken
+import sys
+
+csv.field_size_limit(sys.maxsize)
 
 llm_tokenizer = tiktoken.get_encoding("cl100k_base")
 
@@ -81,7 +84,7 @@ def extract_text_from_file(file: BufferedReader, mimetype: str) -> str:
     ):
         # Extract text from docx using docx2txt
         extracted_text = docx2txt.process(file)
-    elif mimetype == "text/csv":
+    elif (mimetype == "text/csv") or  (mimetype == "application/csv"):
         # Extract text from csv using csv module
         extracted_text = ""
         decoded_buffer = (line.decode("utf-8") for line in file)
@@ -232,8 +235,9 @@ def get_text_chunks(
 # %%
 class DocumentSematicSearch:
     def __init__(self, model_name):
+        model_name = model_name #'hkunlp/instructor-base'#'sentence-transformers/all-mpnet-base-v2'
         self.tokenizer = AutoTokenizer.from_pretrained(model_name)
-        self.model = AutoModel.from_pretrained(model_name)
+        self.model = AutoModel.from_pretrained(model_name).to("cuda")
         self.llm_tokenizer = llm_tokenizer
 
     def mean_pooling(self, model_output, attention_mask):
@@ -251,12 +255,13 @@ class DocumentSematicSearch:
         encoded_input = self.tokenizer(
             text, padding=True, truncation=True, return_tensors="pt"
         )
+        encoded_input = encoded_input.to("cuda")
         with torch.no_grad():
             model_output = self.model(**encoded_input)
             sentence_embeddings = self.mean_pooling(
                 model_output, encoded_input["attention_mask"]
             )
-        return sentence_embeddings
+        return sentence_embeddings.to("cpu")
 
     def get_topk_result(self, query_embeddings, corpus_embeddings, k=5):
         result = util.semantic_search(

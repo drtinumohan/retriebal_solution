@@ -5,10 +5,13 @@ default_qa_model_name = "deepset/roberta-base-squad2-distilled"
 top_k = 5
 
 sematic_search_model_names = (
+    '<select>',
     default_sematic_search_model_name,
     "sentence-transformers/msmarco-MiniLM-L-12-v3",
     "sentence-transformers/msmarco-distilbert-base-v3",
     "sentence-transformers/msmarco-distilbert-base-v4",
+    'intfloat/e5-base-v2',
+    'sentence-transformers/all-mpnet-base-v2'
 )
 
 qa_model_names = (

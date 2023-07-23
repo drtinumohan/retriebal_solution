@@ -23,3 +23,5 @@ qa_model_names = (
 
 sematic_search_key_name = "sematic_search_model_name "
 qa_key_name = "qa_model_name"
+question_header = "Question"
+answer_header = "Answer"

@@ -1,15 +1,12 @@
-from utils.llm import get_pipeline
 from utils.document_paraser import (
     DocumentSematicSearch,
     get_files_chunks,
     extract_text_from_form_all_file,
     complete_sentence,
 )
-
-from utils.embedding import get_top_k_result
 from pathlib import Path
 import streamlit as st
-from utils.converter import get_pdf_files
+from utils.converter import get_files
 from utils.constant import (
     folder_location,
     sematic_search_model_names,
@@ -72,7 +69,7 @@ sematic_search_model_name = st.selectbox(
 
 if sematic_search_model_name != "<select>":
     st.session_state.index = sematic_search_model_names.index(sematic_search_model_name)
-    doc_list = tuple(get_pdf_files(folder_location))
+    doc_list = tuple(get_files(folder_location,"pdf"))
     doc_embd, document_chunks, doc_search_model = setup_model(
         doc_list, sematic_search_model_name, chunk_token_size
     )

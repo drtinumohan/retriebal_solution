@@ -13,7 +13,7 @@ import torch
 import streamlit as st
 from langchain import PromptTemplate, LLMChain
 
-from utils.converter import pdf_converter, get_pdf_files, read_json_file
+from utils.converter import pdf_converter, get_files, read_json_file
 from utils.constant import (
     sematic_search_model_names,
     folder_location,
@@ -41,7 +41,7 @@ def setup_model(doc_list, doc_search_model_name, chunk_token_size):
     return doc_embd, document_chunks, doc_search_model
 
 
-doc_list = tuple(get_pdf_files(folder_location))
+doc_list = tuple(get_files(folder_location,"pdf"))
 
 if "index" not in st.session_state:
     st.session_state.index = 3

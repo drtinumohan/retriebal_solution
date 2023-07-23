@@ -12,11 +12,11 @@ def remove_urls_within_parentheses(string):
     return cleaned_string
 
 
-def get_pdf_files(dir_name):
+def get_files(dir_name,doc_extention="pdf"):
     list_pdf = []
     list_file = os.listdir(dir_name)
     for file in list_file:
-        if file.endswith("pdf") or file.endswith("csv"):
+        if file.endswith(doc_extention): #or file.endswith("csv"):
             list_pdf.append(file)
     return list_pdf
 
@@ -36,7 +36,7 @@ def save_json(fpath, dictionary):
 
 
 def delete_documents(dir_name):
-    files = get_pdf_files(dir_name)
+    files = get_files(dir_name,"pdf")
     for f in files:
         os.remove(os.path.join(dir_name, f))
 
@@ -79,7 +79,7 @@ def pdf_converter(
         list_pdf = [fname]
         pass
     else:
-        list_pdf = get_pdf_files(directory_path)
+        list_pdf = get_files(directory_path)
     final_para_list = []
 
     df = pd.DataFrame(columns=["title", "paragraphs"])

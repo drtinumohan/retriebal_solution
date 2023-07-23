@@ -1,4 +1,4 @@
-from utils.converter import pdf_converter, get_pdf_files, read_json_file
+from utils.converter import pdf_converter, get_files, read_json_file
 from utils.embedding import get_model, get_embedding, get_top_k_result, get_fasis_model
 import streamlit as st
 from pathlib import Path
@@ -61,7 +61,7 @@ def setup_model(doc_list, sematic_search_model_name, qa_model_name):
 #     return qa_model
 
 
-doc_list = tuple(get_pdf_files(folder_location))
+doc_list = tuple(get_files(folder_location,"pdf"))
 emb_model, doc_emb, doc_text, index_model, qa_model = setup_model(
     doc_list,
     model_config.get(sematic_search_key_name, default_sematic_search_model_name),

@@ -237,7 +237,7 @@ class DocumentSematicSearch:
     def __init__(self, model_name):
         model_name = model_name #'hkunlp/instructor-base'#'sentence-transformers/all-mpnet-base-v2'
         self.tokenizer = AutoTokenizer.from_pretrained(model_name)
-        self.model = AutoModel.from_pretrained(model_name).to("cuda")
+        self.model = AutoModel.from_pretrained(model_name)#.to("cuda")
         self.llm_tokenizer = llm_tokenizer
 
     def mean_pooling(self, model_output, attention_mask):
@@ -255,19 +255,19 @@ class DocumentSematicSearch:
         encoded_input = self.tokenizer(
             text, padding=True, truncation=True, return_tensors="pt"
         )
-        encoded_input = encoded_input.to("cuda")
+        encoded_input = encoded_input#.to("cuda")
         with torch.no_grad():
             model_output = self.model(**encoded_input)
             sentence_embeddings = self.mean_pooling(
                 model_output, encoded_input["attention_mask"]
             )
-        return sentence_embeddings.to("cpu")
+        return sentence_embeddings#.to("cpu")
 
     def get_topk_result(self, query_embeddings, corpus_embeddings, k=5):
         result = util.semantic_search(
             query_embeddings, corpus_embeddings, score_function=util.cos_sim
         )
-        return [(scores["corpus_id"], scores["score"]) for scores in result[0][:k]]
+        return [[scores["corpus_id"], scores["score"]] for scores in result[0][:k]]
 
     # def get_document_index():
 

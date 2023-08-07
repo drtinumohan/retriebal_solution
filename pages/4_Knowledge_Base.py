@@ -77,11 +77,40 @@ llm = HuggingFacePipeline(pipeline=llm_pipeline)
 
 # >>QUESTION<<{question}
 # >>ANSWER<<"""
-template = """You are a helpful AI assistant and provide answers as truthfully as by possible using the given context while disregarding the case sensitivity of the characters in the context.
-Context:{context}
+# template = """
+# You are a helpful AI assistant and provide the ANSWER for the question based on the given context.
+# context:
+# {context}
+# >>QUESTION<<
+# {question}
+# >>ANSWER<<"""
+# template="""
+# User: You are a helpful AI Assistant Read the following provided text and answer my question as truthfully as possible at the end.
+# {context}
+# {question}?
+# Assistant:
+# """
+# template="""
+# Given the following contexts and a question, create a final answer. Only use the given context to arrive at your answer. If you don't know the answer, just say that you don't know. Don't try to make up an answer.
+# Context:{context}
+# Question: What did the president say about Michael Jackson?
+# Answer: Context information provided is not enought to answer the question
+# Question:{question}?
+# Answer:
+# """
 
->>QUESTION<<{question}
->>ANSWER<<"""
+template="""
+<s>[INST] <<SYS>>
+Given the following contexts and a question, create a final answer. Only use the given context to arrive at your answer. If you don't know the answer, just say that you don't know. Don't try to make up an answer.
+<</SYS>>
+
+{context}
+Read the above paragraph then answer the question.
+{question} [/INST] 
+"""
+
+
+
 prompt = PromptTemplate(template=template, input_variables=["question", "context"])
 llm_chain = LLMChain(prompt=prompt, llm=llm)
 
@@ -103,12 +132,12 @@ question = st.text_input(
 )
 if question:  # and context:
     query_emb = doc_search_model.get_document_embedding(question)
-    topk_docs = doc_search_model.get_topk_result(query_emb, doc_embd, k=2)
+    topk_docs = doc_search_model.get_topk_result(query_emb, doc_embd, k=5)
 
     result = [complete_sentence(document_chunks[doc_info[0]]) for doc_info in topk_docs]
     context = " ".join(result)
     print("LLM \n", prompt.format(question=question, context=context))
-    st.write(llm_chain.run(question=question, context=context))
+    st.write(complete_sentence(llm_chain.run(question=question, context=context)))
     # st.write(result)
 
     # query_emb = emb_model.encode(question)

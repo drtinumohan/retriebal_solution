@@ -29,30 +29,70 @@ llm = HuggingFacePipeline(pipeline=llm_pipeline)
 
 #You are a helpful AI assistant and provide >>OUTPUT<< AS JSON for >>QUERY<< by learening patterns >>INPUT<< and >>OUTPUT<< 
 
+# example = """
+# You are a helpful AI assistant. From the examples given below, Learn the  >>OUTPUT<< generated from >>INPUT<<
+# >>INPUT<< all fights from AYT
+# >>OUTPUT<< {"logicalOperator":"AND","conditions":[{"entity":"flight","property":"from_airport","condition":"=","value":"AYT"}]}
+# >>INPUT<< Show me all flights arriving or departing at DXB
+# >>INPUT<< Show me all flights going through DXB
+# >>OUTPUT<< {"logicalOperator":"OR","conditions":[{"entity":"flight","property":"from_airport","condition":"=","value":"DXB"},{"entity":"flight","property":"to_airport","condition":"=","value":"DXB"}]}
+# >>INPUT<< Show all fights from AYT to FRA
+# >>OUTPUT<< {"logicalOperator":"AND","conditions":[{"entity":"flight","property":"from_airport","condition":"=","value":"AYT"},{"entity":"flight","property":"to_airport","condition":"=","value":"FRA"}]}
+# >>INPUT<< List all 777 aircraft
+# >>OUTPUT<< {"logicalOperator":"AND","conditions":[{"entity":"flight","property":"aircraft_type","condition":"=","value":"777"}]}
+# >>INPUT<< Show me all the flights departing in less than 5 hours
+# >>OUTPUT<< {"logicalOperator":"AND","conditions":[{"entity":"flight","property":"flight_date_time","condition":"<","value":"5 hours"}]}
+# >>INPUT<< Show me all flights at DXB between 0300 and 0800 today 
+# >>OUTPUT<<{"logicalOperator":"AND","conditions":[{"entity":"flight","property":"from_airport","condition":"=","value":"DXB"},{"entity":"flight","property":"flight_date_time","condition":"BETWEEN","value":["0300","0800"]}]}
+# now provide >>OUTPUT<< AS JSON for the >>QUERY<<
+# """
 example = """
-You are a helpful AI assistant. From the examples given below, Learn the  >>OUTPUT<< generated from >>INPUT<<
->>INPUT<< all fights from AYT
->>OUTPUT<< {"logicalOperator":"AND","conditions":[{"entity":"flight","property":"from_airport","condition":"=","value":"AYT"}]}
->>INPUT<< Show me all flights arriving or departing at DXB
->>INPUT<< Show me all flights going through DXB
->>OUTPUT<< {"logicalOperator":"OR","conditions":[{"entity":"flight","property":"from_airport","condition":"=","value":"DXB"},{"entity":"flight","property":"to_airport","condition":"=","value":"DXB"}]}
->>INPUT<< Show all fights from AYT to FRA
->>OUTPUT<< {"logicalOperator":"AND","conditions":[{"entity":"flight","property":"from_airport","condition":"=","value":"AYT"},{"entity":"flight","property":"to_airport","condition":"=","value":"FRA"}]}
->>INPUT<< List all 777 aircraft
->>OUTPUT<< {"logicalOperator":"AND","conditions":[{"entity":"flight","property":"aircraft_type","condition":"=","value":"777"}]}
->>INPUT<< Show me all the flights departing in less than 5 hours
->>OUTPUT<< {"logicalOperator":"AND","conditions":[{"entity":"flight","property":"flight_date_time","condition":"<","value":"5 hours"}]}
->>INPUT<< Show me all flights at DXB between 0300 and 0800 today 
->>OUTPUT<<{"logicalOperator":"AND","conditions":[{"entity":"flight","property":"from_airport","condition":"=","value":"DXB"},{"entity":"flight","property":"flight_date_time","condition":"BETWEEN","value":["0300","0800"]}]}
-now provide >>OUTPUT<< AS JSON for the >>QUERY<<
+You are a helpful AI assistant. From the examples given below, Learn the OUTPUT generated from INPUT
+example
+INPUT: all fights from AYT
+OUTPUT:{"logicalOperator":"AND","conditions":[{"entity":"flight","property":"from_airport","condition":"=","value":"AYT"}]}
+INPUT: Show me all flights arriving or departing at DXB
+example
+INPUT: Show me all flights going through DXB
+OUTPUT:{"logicalOperator":"OR","conditions":[{"entity":"flight","property":"from_airport","condition":"=","value":"DXB"},{"entity":"flight","property":"to_airport","condition":"=","value":"DXB"}]}
+example
+INPUT: Show all fights from AYT to FRA
+OUTPUT:{"logicalOperator":"AND","conditions":[{"entity":"flight","property":"from_airport","condition":"=","value":"AYT"},{"entity":"flight","property":"to_airport","condition":"=","value":"FRA"}]}
+INPUT: List all 777 aircraft
+OUTPUT:{"logicalOperator":"AND","conditions":[{"entity":"flight","property":"aircraft_type","condition":"=","value":"777"}]}
+example
+INPUT: Show me all the flights departing in less than 5 hours
+OUTPUT:{"logicalOperator":"AND","conditions":[{"entity":"flight","property":"flight_date_time","condition":"<","value":"5 hours"}]}
+example
+INPUT: Show me all flights at DXB between 0300 and 0800 today 
+OUTPUT:{"logicalOperator":"AND","conditions":[{"entity":"flight","property":"from_airport","condition":"=","value":"DXB"},{"entity":"flight","property":"flight_date_time","condition":"BETWEEN","value":["0300","0800"]}]}
 """
 
 prompt_area = """
+<s>[INST] <<SYS>>
 {example}
->>QUERY<< {question}
->>OUTPUT<< 
+<</SYS>>
+Provide the OUTPUT for 
+INPUT: {question}
+[/INST] 
 """
 
+
+# example = """ 
+# You are a translation assistant and provide translation at the end based on the user and its corresponding translation provided
+# user: all fights from AYT
+# translation: {"logicalOperator":"AND","conditions":[{"entity":"flight","property":"from_airport","condition":"=","value":"AYT"}]}
+# user: Show me all flights arriving or departing at DXB
+# user: Show me all flights going through DXB
+# translation: {"logicalOperator":"OR","conditions":[{"entity":"flight","property":"from_airport","condition":"=","value":"DXB"},{"entity":"flight","property":"to_airport","condition":"=","value":"DXB"}]}
+# user: List all 777 aircraft
+# translation: {"logicalOperator":"AND","conditions":[{"entity":"flight","property":"aircraft_type","condition":"=","value":"777"}]}
+# """
+# prompt_area="""
+# {example}
+# user: {question}
+# translation:
+# """
 
 
 query_area = st.text_area(

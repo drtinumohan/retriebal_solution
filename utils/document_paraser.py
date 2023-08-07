@@ -18,6 +18,8 @@ import torch.nn.functional as F
 from sentence_transformers import SentenceTransformer, util
 import tiktoken
 import sys
+from utils.constant import  model_dir
+
 
 csv.field_size_limit(sys.maxsize)
 
@@ -234,11 +236,21 @@ def get_text_chunks(
 
 # %%
 class DocumentSematicSearch:
-    def __init__(self, model_name):
+    def __init__(self, model_name, dir_name= model_dir):
         model_name = model_name #'hkunlp/instructor-base'#'sentence-transformers/all-mpnet-base-v2'
         self.tokenizer = AutoTokenizer.from_pretrained(model_name)
         self.model = AutoModel.from_pretrained(model_name)#.to("cuda")
         self.llm_tokenizer = llm_tokenizer
+        self.dir_name = dir_name
+
+    def check_model_exist(self, model_path):
+        fpath = os.path.basename(os.path.normpath(model_path))
+        if os.path.exists(f"{self.dir_name}{fpath}"):
+            return f"{self.dir_name}{fpath}"
+        # else:
+        #     return model_path
+
+         
 
     def mean_pooling(self, model_output, attention_mask):
         token_embeddings = model_output[

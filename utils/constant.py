@@ -1,5 +1,6 @@
 folder_location = "download_location/"
 model_config_fname = "model_config.json"
+model_dir="model_files/"
 default_sematic_search_model_name = "sentence-transformers/msmarco-MiniLM-L-6-v3"
 default_qa_model_name = "deepset/roberta-base-squad2-distilled"
 top_k = 5

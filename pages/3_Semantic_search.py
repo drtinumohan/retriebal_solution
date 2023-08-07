@@ -29,7 +29,7 @@ sematic_search_model_name = st.selectbox(
     index=0,
 )
 @st.cache_resource
-def extract_embed_docuemnt(file_path, _doc_search_model):
+def extract_document_embed(file_path, _doc_search_model):
     data_df = pd.read_excel(file_path)
     answer_headers = list(set(data_df.columns)-set([question_header]))#[val  for val in data_df.columns if val.startswith(answer_header)]
     
@@ -53,7 +53,7 @@ def setup_model(file_paths, sematic_search_model_name):
     doc_search_model = DocumentSematicSearch(sematic_search_model_name)
     for idx, file_path in enumerate(file_paths):
         abs_path = os.path.join(folder_location, file_path)
-        doc_embd, data_arr, answer_headers = extract_embed_docuemnt(abs_path, doc_search_model) 
+        doc_embd, data_arr, answer_headers = extract_document_embed(abs_path, doc_search_model) 
         all_doc_embd.extend(doc_embd)
         all_data_arr.extend(data_arr)
         meta_data.append(
